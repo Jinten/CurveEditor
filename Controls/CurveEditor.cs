@@ -1,4 +1,5 @@
-﻿using System;
+﻿using CurveEditor.Extensions;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Specialized;
@@ -21,9 +22,56 @@ namespace CurveEditor.Controls
 {
     static class MathUtility
     {
+        public static int Clamp(int value, int minValue, int maxValue)
+        {
+            return Math.Min(Math.Max(value, minValue), maxValue);
+        }
+
         public static double Clamp(double value, double minValue, double maxValue)
         {
             return Math.Min(Math.Max(value, minValue), maxValue);
+        }
+    }
+
+    class FontRenderer
+    {
+        internal static Typeface Typeface { get; } = new Typeface("Verdana");
+
+        FormattedText _Text = null;
+        Brush _Foreground = null;
+        double _FontSize = 8.0;
+
+        public FontRenderer(Brush foreground, double emSize = 8, FlowDirection flowDirection = FlowDirection.LeftToRight)
+        {
+            _FontSize = emSize;
+
+            _Foreground = foreground.Clone();
+            _Foreground.Freeze();
+
+            _Text = new FormattedText("Default", CultureInfo.CurrentCulture, flowDirection, Typeface, emSize, _Foreground, 1.0);
+        }
+
+        public void Render(DrawingContext dc, in string text, in Point pos, double emSize = 8, FlowDirection flowDirection = FlowDirection.LeftToRight)
+        {
+            if (_Text.Text != text)
+            {
+                _FontSize = emSize;
+                _Text = new FormattedText(text, CultureInfo.CurrentCulture, flowDirection, Typeface, _FontSize, _Foreground, 1.0);
+            }
+            else
+            {
+                if (_FontSize != emSize)
+                {
+                    _FontSize = emSize;
+                    _Text.SetFontSize(_FontSize);
+                }
+                if (_Text.FlowDirection != flowDirection)
+                {
+                    _Text.FlowDirection = flowDirection;
+                }
+            }
+
+            dc.DrawText(_Text, pos);
         }
     }
 
@@ -35,10 +83,9 @@ namespace CurveEditor.Controls
         internal static Point RenderOffset { get; } = new Point(-Math.Ceiling(HalfSize), -Math.Ceiling(HalfSize));
         internal static Point ComputeOffset { get; } = new Point(Math.Ceiling(HalfSize), Math.Ceiling(HalfSize));
 
-        double LimitedXPos => _ActualAreaSize.Width - HalfSize;
         double LimitedYPos => _ActualAreaSize.Height - HalfSize;
-        double ControlAreaWidth => _ActualAreaSize.Width - FullSize.Width;
-        double ControlAreaHeight => _ActualAreaSize.Height - FullSize.Height;
+        double ControlAreaWidth => _ActualAreaSize.Width - FullSize.Width - 1;
+        double ControlAreaHeight => _ActualAreaSize.Height - FullSize.Height - 1;
 
         internal double PositionX => Translate.X;
         internal double PositionY => Translate.Y;
@@ -57,6 +104,8 @@ namespace CurveEditor.Controls
         ControlValue Value { get; } = null;
         Vector _CapturedLocalPosition = new Vector(0, 0);
 
+        FontRenderer ValueText { get; } = new FontRenderer(Brushes.Black);
+
         TranslateTransform Translate { get; } = new TranslateTransform(0, 0);
 
         public ControlPoint(ControlValue value, float delta, float maxWidth, float maxHeight)
@@ -66,7 +115,7 @@ namespace CurveEditor.Controls
             _Delta = delta;
             _ActualAreaSize = new Size(maxWidth, maxHeight);
 
-            Placement(_Delta, _ActualAreaSize);
+            Placement();
 
             var transformGroup = new TransformGroup();
             transformGroup.Children.Add(Translate);
@@ -97,16 +146,16 @@ namespace CurveEditor.Controls
             _Delta = delta;
             _ActualAreaSize = actualSize;
 
-            Placement(delta, actualSize);
+            Placement();
         }
 
-        public void UpdatePosition(Point mousePosition)
+        public void UpdatePosition(Point mousePosition, double minX, double maxX)
         {
-            Translate.X = MathUtility.Clamp(mousePosition.X - _CapturedLocalPosition.X, ComputeOffset.X, LimitedXPos);
+            Translate.X = MathUtility.Clamp(mousePosition.X - _CapturedLocalPosition.X, minX, maxX);
             Translate.Y = MathUtility.Clamp(mousePosition.Y - _CapturedLocalPosition.Y, ComputeOffset.Y, LimitedYPos);
 
-            var xValue = (Translate.X - ComputeOffset.X);
-            var yValue = (Translate.Y - ComputeOffset.Y);
+            var xValue = MathUtility.Clamp(Translate.X, ComputeOffset.X, _ActualAreaSize.Width) - ComputeOffset.X;
+            var yValue = MathUtility.Clamp(Translate.Y, ComputeOffset.Y, _ActualAreaSize.Height) - ComputeOffset.Y;
             Value.NormalizedTime = (float)(xValue / ControlAreaWidth);
             Value.Value = (float)(yValue / ControlAreaHeight * _Delta);
 
@@ -116,14 +165,17 @@ namespace CurveEditor.Controls
         protected override void OnRender(DrawingContext dc)
         {
             dc.DrawRectangle(GetBrush(), GetPen(), new Rect(RenderOffset, FullSize));
+
+            var text = string.Format("(v={0:F2},t={1:F2})", Value.Value, Value.NormalizedTime);
+            ValueText.Render(dc, text, new Point(0, 4));
         }
 
-        void Placement(float delta, Size actualSize)
+        void Placement()
         {
-            var x = Value.NormalizedTime * actualSize.Width;
-            var y = Value.Value / delta * actualSize.Height;
-            Translate.X = MathUtility.Clamp(x, ComputeOffset.X, actualSize.Width - HalfSize);
-            Translate.Y = MathUtility.Clamp(y, ComputeOffset.Y, actualSize.Height - HalfSize);
+            var x = Value.NormalizedTime * ControlAreaWidth;
+            var y = Value.Value / _Delta * ControlAreaHeight;
+            Translate.X = MathUtility.Clamp(x, 0, _ActualAreaSize.Width) + ComputeOffset.X;
+            Translate.Y = MathUtility.Clamp(y, 0, _ActualAreaSize.Height) + ComputeOffset.Y;
 
             InvalidateVisual();
         }
@@ -174,9 +226,12 @@ namespace CurveEditor.Controls
         public double ControlAreaEndY => ActualHeight - ControlAreaStartY;
 
         CurveEditor _Owner = null;
-        Pen _LinePen = null;
+        Pen _GridLinePen = null;
+        Pen _OuterBorderLinePen = null;
+        Pen _InnerBorderLinePen = null;
 
-        static Typeface Typeface = new Typeface("Verdana");
+        FontRenderer MinValueFont = new FontRenderer(Brushes.Black);
+        FontRenderer MaxValueFont = new FontRenderer(Brushes.Black);
 
         internal void SetOwner(CurveEditor owner)
         {
@@ -195,11 +250,22 @@ namespace CurveEditor.Controls
 
         protected override void OnRender(DrawingContext dc)
         {
-            if (_LinePen == null)
+            if (_GridLinePen == null)
             {
-                _LinePen = new Pen(Brushes.DimGray, 1);
-                _LinePen.DashStyle = new DashStyle(new double[] { 2 }, 0);
-                _LinePen.Freeze();
+                _GridLinePen = new Pen(Brushes.DimGray, 1);
+                _GridLinePen.DashStyle = new DashStyle(new double[] { 2 }, 0);
+                _GridLinePen.Freeze();
+            }
+
+            if (_OuterBorderLinePen == null)
+            {
+                _OuterBorderLinePen = new Pen(Brushes.Black, 1);
+                _OuterBorderLinePen.Freeze();
+            }
+            if (_InnerBorderLinePen == null)
+            {
+                _InnerBorderLinePen = new Pen(Brushes.Black, 1);
+                _InnerBorderLinePen.DashStyle = new DashStyle(new double[] { 3.0 }, 0.0);
             }
 
             int num = 5;
@@ -208,13 +274,13 @@ namespace CurveEditor.Controls
             {   // Actual size border line.
                 var p0 = new Point(0, 0);
                 var p1 = new Point(ActualWidth, ActualHeight);
-                dc.DrawRectangle(null, new Pen(Brushes.Black, 1), new Rect(p0, p1));
+                dc.DrawRectangle(null, _OuterBorderLinePen, new Rect(p0, p1));
             }
 
             {   // Inner controllable area border line.
-                var p0 = new Point(ControlAreaStartX - 1, ControlAreaStartY);
+                var p0 = new Point(ControlAreaStartX, ControlAreaStartY);
                 var p1 = new Point(ControlAreaEndX, ControlAreaEndY);
-                dc.DrawRectangle(null, new Pen(Brushes.Black, 1), new Rect(p0, p1));
+                dc.DrawRectangle(null, _InnerBorderLinePen, new Rect(p0, p1));
             }
 
             for (int i = 1; i < num; ++i)
@@ -222,7 +288,7 @@ namespace CurveEditor.Controls
                 var y = i * rcp * ControlAreaEndX;
                 var p0 = new Point(ControlAreaStartX, y);
                 var p1 = new Point(ControlAreaEndX, y);
-                dc.DrawLine(_LinePen, p0, p1);
+                dc.DrawLine(_GridLinePen, p0, p1);
             }
 
             for (int i = 1; i < num; ++i)
@@ -230,7 +296,7 @@ namespace CurveEditor.Controls
                 var x = i * rcp * ControlAreaEndX;
                 var p0 = new Point(x, ControlAreaStartY);
                 var p1 = new Point(x, ControlAreaEndX - 1);
-                dc.DrawLine(_LinePen, p0, p1);
+                dc.DrawLine(_GridLinePen, p0, p1);
             }
 
             // render curve
@@ -253,25 +319,32 @@ namespace CurveEditor.Controls
                     }
 
                     ctx.PolyLineTo(points, true, false);
-
                 }
                 dc.DrawGeometry(null, new Pen(Brushes.Pink, 1), geometry);
             }
 
             {
-                var text = new FormattedText($"{_Owner.MinValue}", CultureInfo.CurrentCulture, FlowDirection.LeftToRight, Typeface, 8, Brushes.Black, 1.0);
-                dc.DrawText(text, new Point(ControlPoint.HalfSize + 1, ControlAreaEndY - ControlPoint.FullSize.Height - 1));
+                var pos = new Point(ControlPoint.HalfSize + 3, ControlAreaEndY - ControlPoint.FullSize.Height - 3);
+                MinValueFont.Render(dc, $"{_Owner.MinValue}", pos);
             }
 
             {
-                var text = new FormattedText($"{_Owner.MaxValue}", CultureInfo.CurrentCulture, FlowDirection.LeftToRight, Typeface, 8, Brushes.Black, 1.0);
-                dc.DrawText(text, new Point(ControlPoint.HalfSize + 1, ControlPoint.HalfSize + 1));
+                var pos = new Point(ControlPoint.HalfSize + 3, ControlPoint.HalfSize + 3);
+                MaxValueFont.Render(dc, $"{_Owner.MaxValue}", pos);
             }
         }
     }
 
     public class CurveEditor : Selector
     {
+        public CurveType Type
+        {
+            get => (CurveType)GetValue(CurveTypeProperty);
+            set => SetValue(CurveTypeProperty, value);
+        }
+        public static readonly DependencyProperty CurveTypeProperty =
+            DependencyProperty.Register(nameof(Type), typeof(CurveType), typeof(CurveEditor), new PropertyMetadata(CurveType.Line));
+
         public float MaxValue
         {
             get => (float)GetValue(MaxValueProperty);
@@ -382,12 +455,16 @@ namespace CurveEditor.Controls
                 _DraggingControlPoint = null;
                 return;
             }
-            var pos = e.GetPosition(_CurveEditorCanvas);
-            var limited_x = MathUtility.Clamp(pos.X, _CurveEditorCanvas.ControlAreaStartX, _CurveEditorCanvas.ControlAreaEndX);
-            var limited_y = MathUtility.Clamp(pos.Y, _CurveEditorCanvas.ControlAreaStartY, _CurveEditorCanvas.ControlAreaEndY);
-            var limitedPos = new Point(limited_x, limited_y);
 
-            _DraggingControlPoint?.UpdatePosition(limitedPos);
+            var controls = _CurveEditorCanvas.Children.OfType<ControlPoint>().ToArray();
+
+            int index = controls.IndexOf(_DraggingControlPoint);
+            var min_x = index > 0 ? controls[index - 1].PositionX : _CurveEditorCanvas.ControlAreaStartX;
+            var max_x = index < controls.Length - 1 ? controls[index + 1].PositionX : _CurveEditorCanvas.ControlAreaEndX;
+
+            var pos = e.GetPosition(_CurveEditorCanvas);
+            _DraggingControlPoint?.UpdatePosition(pos, min_x, max_x);
+
             _CurveEditorCanvas.InvalidateVisual();
         }
 
