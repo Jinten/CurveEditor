@@ -10,6 +10,6 @@ namespace CurveEditor
     {
         Linear,
         CatmullRom,
-        B_Spline,
+        B_Spline, // Not implemented yet
     }
 }

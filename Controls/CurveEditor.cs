@@ -423,6 +423,8 @@ namespace CurveEditor.Controls
                             ctx.PolyLineTo(points, true, false);
                         }
                         break;
+                    case CurveType.B_Spline:
+                        throw new NotImplementedException();
                 }
 
                 dc.DrawGeometry(null, new Pen(Brushes.Pink, 1), geometry);
@@ -478,6 +480,8 @@ namespace CurveEditor.Controls
                     case CurveType.CatmullRom:
                         _ScanningValue = GetScanningCatmullRomValue(_ScanningTime);
                         break;
+                    case CurveType.B_Spline:
+                        throw new NotImplementedException();
                 }
             }
         }
