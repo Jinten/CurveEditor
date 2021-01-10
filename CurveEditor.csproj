@@ -83,6 +83,10 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Page Include="Windows\CurveEditorWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
@@ -92,6 +96,9 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="Controls\CurveEditor.cs" />
+    <Compile Include="Windows\CurveEditorWindow.xaml.cs">
+      <DependentUpon>CurveEditorWindow.xaml</DependentUpon>
+    </Compile>
     <Compile Include="ControlValue.cs" />
     <Compile Include="CurveLibs\CatmullRomSpline.cs" />
     <Compile Include="CurveType.cs" />

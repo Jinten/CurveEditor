@@ -20,11 +20,11 @@
         <DockPanel VerticalAlignment="Center" HorizontalAlignment="Center">
             <controls:CurveEditor ItemsSource="{Binding ControlPoints}" MinValue="0" MaxValue="100" Type="CatmullRom"/>
             <StackPanel Margin="16,0,0,0">
-                <TextBlock Text="ViewModel Properties"/>
-                <ListBox ItemsSource="{Binding ControlPointVMs}" Width="200" Margin="0,16,0,0">
+                <TextBlock Text="ViewModel binding properties." Foreground="WhiteSmoke"/>
+                <ListBox ItemsSource="{Binding ControlPointVMs}" Width="200" Margin="0,16,0,0" Background="Black">
                     <ListBox.ItemTemplate>
                         <DataTemplate>
-                            <TextBlock>
+                            <TextBlock Foreground="WhiteSmoke">
                                 <TextBlock.Text>
                                     <MultiBinding StringFormat="(Value={0:F4}, t={1:F4})">
                                         <Binding Path="Value"/>

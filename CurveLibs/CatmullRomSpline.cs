@@ -9,6 +9,32 @@ namespace CurveEditor.CurveLibs
 {
     class CatmullRomSpline
     {
+        public static float[] Compute(int nSectionDivision, float[] values, float minValue, float maxValue)
+        {
+            if (nSectionDivision == 0)
+            {
+                throw new InvalidProgramException("nSectionDivision is Zero.");
+            }
+
+            float rcp = 1.0f / nSectionDivision;
+
+            var results = new List<float>();
+
+            for (int i = 0; i < values.Length - 1; ++i)
+            {
+                for (int j = 0; j < nSectionDivision; ++j)
+                {
+                    float t = j * rcp;
+                    var value = ComputeSingle(i, t, values);
+                    results.Add(Math.Min(Math.Max(value, minValue), maxValue));
+                }
+
+                results.Add(Math.Min(Math.Max(values[i + 1], minValue), maxValue));
+            }
+
+            return results.ToArray();
+        }
+
         public static float[] Compute(int nSectionDivision, float[] values)
         {
             if(nSectionDivision == 0)
