@@ -6,7 +6,7 @@
         xmlns:controls="clr-namespace:CurveEditor.Controls"
         xmlns:local="clr-namespace:CurveEditor"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
+        Title="MainWindow" Height="450" Width="800" Background="Black">
 
     <Window.DataContext>
         <local:MainWindowViewModel/>
@@ -17,6 +17,25 @@
     </Window.Resources>
 
     <Grid>
-        <controls:CurveEditor MinValue="0" MaxValue="100" ItemsSource="{Binding ControlPoints}"/>
+        <DockPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+            <controls:CurveEditor ItemsSource="{Binding ControlPoints}" MinValue="0" MaxValue="100" Type="CatmullRom"/>
+            <StackPanel Margin="16,0,0,0">
+                <TextBlock Text="ViewModel Properties"/>
+                <ListBox ItemsSource="{Binding ControlPointVMs}" Width="200" Margin="0,16,0,0">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock>
+                                <TextBlock.Text>
+                                    <MultiBinding StringFormat="(Value={0:F4}, t={1:F4})">
+                                        <Binding Path="Value"/>
+                                        <Binding Path="NormalizedTime"/>
+                                    </MultiBinding>
+                                </TextBlock.Text>
+                            </TextBlock>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </StackPanel>
+        </DockPanel>
     </Grid>
 </Window>

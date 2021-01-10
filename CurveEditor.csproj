@@ -96,6 +96,7 @@
     <Compile Include="CurveLibs\CatmullRomSpline.cs" />
     <Compile Include="CurveType.cs" />
     <Compile Include="Extensions\ArrayExtension.cs" />
+    <Compile Include="Extensions\VectorExtension.cs" />
     <Compile Include="MainWindow.xaml.cs">
       <DependentUpon>MainWindow.xaml</DependentUpon>
       <SubType>Code</SubType>

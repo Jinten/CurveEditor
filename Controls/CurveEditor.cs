@@ -1,4 +1,5 @@
-﻿using CurveEditor.Extensions;
+﻿using CurveEditor.CurveLibs;
+using CurveEditor.Extensions;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -80,10 +81,10 @@ namespace CurveEditor.Controls
         internal const float Size = 9;
         internal const float HalfSize = Size * 0.5f;
         internal static Size FullSize { get; } = new Size(Size, Size);
-        internal static Point RenderOffset { get; } = new Point(-Math.Ceiling(HalfSize), -Math.Ceiling(HalfSize));
-        internal static Point ComputeOffset { get; } = new Point(Math.Ceiling(HalfSize), Math.Ceiling(HalfSize));
+        internal static Vector RenderOffset { get; } = new Vector(-Math.Ceiling(HalfSize), -Math.Ceiling(HalfSize));
+        internal static Vector ComputeOffset { get; } = new Vector(Math.Ceiling(HalfSize), Math.Ceiling(HalfSize));
 
-        double LimitedYPos => _ActualAreaSize.Height - HalfSize;
+        double LimitedYPos => _ActualAreaSize.Height - Math.Ceiling(HalfSize);
         double ControlAreaWidth => _ActualAreaSize.Width - FullSize.Width - 1;
         double ControlAreaHeight => _ActualAreaSize.Height - FullSize.Height - 1;
 
@@ -111,7 +112,7 @@ namespace CurveEditor.Controls
 
         public ControlPoint(ControlValue value, float delta, float maxWidth, float maxHeight)
         {
-            Value = new ControlValue(value);
+            Value = value;
 
             _Delta = delta;
             _ActualAreaSize = new Size(maxWidth, maxHeight);
@@ -122,6 +123,7 @@ namespace CurveEditor.Controls
             transformGroup.Children.Add(Translate);
 
             RenderTransform = transformGroup;
+            RenderTransformOrigin = new Point(0.5, 0.5);
         }
 
         public void Capture(Point capturedPosition)
@@ -150,7 +152,7 @@ namespace CurveEditor.Controls
         {
             Translate.X = MathUtility.Clamp(mousePosition.X - _CapturedLocalPosition.X, minX, maxX);
             Translate.Y = MathUtility.Clamp(mousePosition.Y - _CapturedLocalPosition.Y, ComputeOffset.Y, LimitedYPos);
-            
+
             var v = GetControlValue(new Point(Translate.X, Translate.Y), _ActualAreaSize, _Delta);
             Value.Value = v.Value;
             Value.NormalizedTime = v.NormalizedTime;
@@ -179,7 +181,7 @@ namespace CurveEditor.Controls
 
         protected override void OnRender(DrawingContext dc)
         {
-            dc.DrawRectangle(GetBrush(), GetPen(), new Rect(RenderOffset, FullSize));
+            dc.DrawRectangle(GetBrush(), GetPen(), new Rect(RenderOffset.ToPoint(), FullSize));
 
             var text = string.Format("(v={0:F2},t={1:F2})", Value.Value, Value.NormalizedTime);
             ValueText.Render(dc, text, new Point(0, 4));
@@ -279,6 +281,8 @@ namespace CurveEditor.Controls
             _IsScanning = true;
             _ScanningPoint = e.GetPosition(this);
 
+            UpdateScanningValue(e);
+
             InvalidateVisual();
         }
 
@@ -290,21 +294,9 @@ namespace CurveEditor.Controls
             {
                 _IsScanning = false;
             }
-            else if(_IsScanning)
+            else if (_IsScanning)
             {
-                var controls = Children.OfType<ControlPoint>().ToArray();
-                if (controls.Length > 0)
-                {
-                    var p0 = controls.First();
-                    var p1 = controls.Last();
-
-                    _ScanningPoint = e.GetPosition(this);
-                    _ScanningPoint.X = MathUtility.Clamp(_ScanningPoint.X, p0.PositionX, p1.PositionX);
-
-                    var value = ControlPoint.GetControlValue(_ScanningPoint, new Size(ActualWidth, ActualHeight), ValueDelta);
-                    _ScanningTime = value.NormalizedTime;
-                    _ScanningValue = GetScanningLinearValue(value.NormalizedTime);
-                }
+                UpdateScanningValue(e);
             }
             InvalidateVisual();
         }
@@ -341,8 +333,8 @@ namespace CurveEditor.Controls
             // Render for hit testing.
             dc.DrawRectangle(Brushes.Transparent, null, new Rect(0, 0, ActualWidth, ActualHeight));
 
-            int num = 5;
-            double rcp = 1.0 / num;
+            int nGrid = 5;
+            double rcpGrid = 1.0 / nGrid;
 
             {   // Actual size border line.
                 var p0 = new Point(0, 0);
@@ -356,17 +348,17 @@ namespace CurveEditor.Controls
                 dc.DrawRectangle(null, _InnerBorderLinePen, new Rect(p0, p1));
             }
 
-            for (int i = 1; i < num; ++i)
+            for (int i = 1; i < nGrid; ++i)
             {
-                var y = i * rcp * ControlAreaEndX;
+                var y = i * rcpGrid * ControlAreaEndX;
                 var p0 = new Point(ControlAreaStartX, y);
                 var p1 = new Point(ControlAreaEndX, y);
                 dc.DrawLine(_GridLinePen, p0, p1);
             }
 
-            for (int i = 1; i < num; ++i)
+            for (int i = 1; i < nGrid; ++i)
             {
-                var x = i * rcp * ControlAreaEndX;
+                var x = i * rcpGrid * ControlAreaEndX;
                 var p0 = new Point(x, ControlAreaStartY);
                 var p1 = new Point(x, ControlAreaEndX - 1);
                 dc.DrawLine(_GridLinePen, p0, p1);
@@ -376,14 +368,13 @@ namespace CurveEditor.Controls
             if (Children.Count > 0)
             {
                 var geometry = new StreamGeometry();
+                var controlPoints = Children.OfType<ControlPoint>().ToArray();
 
                 switch (_Owner.Type)
                 {
-                    case CurveType.Line:
+                    case CurveType.Linear:
                         using (var ctx = geometry.Open())
                         {
-                            var controlPoints = Children.OfType<ControlPoint>().ToArray();
-
                             var firstPoint = controlPoints[0];
                             ctx.BeginFigure(new Point(firstPoint.PositionX, firstPoint.PositionY), false, false);
 
@@ -397,6 +388,41 @@ namespace CurveEditor.Controls
                             ctx.PolyLineTo(points, true, false);
                         }
                         break;
+                    case CurveType.CatmullRom:
+                        using (var ctx = geometry.Open())
+                        {
+                            var firstPoint = controlPoints[0];
+                            ctx.BeginFigure(new Point(firstPoint.PositionX, firstPoint.PositionY), false, false);
+
+                            // convert position in area unit.
+                            var sz = ControlPoint.GetControlAreaSize(new Size(ActualWidth, ActualHeight));
+                            var controlValues = controlPoints.Select(arg => arg.Value.Value).ToArray();
+
+                            int nSectionDivision = 256;
+                            var curveValues = CatmullRomSpline.Compute(nSectionDivision, controlValues);
+
+                            var rcp = 1.0f / nSectionDivision;
+
+                            var points = new List<Point>();
+
+                            for (int i = 0; i < controlValues.Length - 1; ++i)
+                            {
+                                var t0 = controlPoints[i + 0].Value.NormalizedTime;
+                                var t1 = controlPoints[i + 1].Value.NormalizedTime;
+                                var dt = t1 - t0;
+
+                                int index = i * nSectionDivision;
+                                for (int j = 0; j < nSectionDivision; ++j)
+                                {
+                                    var x = (dt * (j * rcp) + t0) * sz.Width + ControlPoint.ComputeOffset.X;
+                                    var y = sz.Height - curveValues[index + j] / _Owner.MaxValue * sz.Height + ControlPoint.ComputeOffset.Y;
+                                    points.Add(new Point(x, y));
+                                }
+
+                            }
+                            ctx.PolyLineTo(points, true, false);
+                        }
+                        break;
                 }
 
                 dc.DrawGeometry(null, new Pen(Brushes.Pink, 1), geometry);
@@ -404,16 +430,17 @@ namespace CurveEditor.Controls
 
             if (_IsScanning)
             {
-                var p0 = new Point(_ScanningPoint.X, 0);
-                var p1 = new Point(_ScanningPoint.X, ActualHeight);
-                dc.DrawLine(new Pen(Brushes.Red, 1), p0, p1);
-
                 var sz = ControlPoint.GetControlAreaSize(new Size(ActualWidth, ActualHeight));
+
                 // Subtract ControlPoint.HalfSize is for adjusting to render layout.
                 // _ScanningValue / _Owner.MaxValue is normalize vertical value line.
                 // Multiply sz.Height for stretching control area vertical and subtract from sz.Height for inverting Y axis.
-                var pos = new Point(_ScanningPoint.X - ControlPoint.HalfSize, sz.Height - (_ScanningValue / _Owner.MaxValue * sz.Height));
-                dc.DrawRectangle(Brushes.DarkRed, null, new Rect(pos, ControlPoint.FullSize));
+                var pos = new Point(_ScanningTime * sz.Width, sz.Height - (_ScanningValue / _Owner.MaxValue * sz.Height));
+                pos.X += ControlPoint.ComputeOffset.X;
+                pos.Y += ControlPoint.ComputeOffset.Y;
+
+                dc.DrawLine(new Pen(Brushes.Red, 1), new Point(pos.X, 0), new Point(pos.X, ActualHeight));
+                dc.DrawRectangle(Brushes.DarkRed, null, new Rect(pos + ControlPoint.RenderOffset, ControlPoint.FullSize));
 
                 var text = string.Format("(v={0:F2},t={1:F2})", _ScanningValue, _ScanningTime);
                 ScanningValueFont.Render(dc, text, new Point(_ScanningPoint.X + 2, pos.Y + ControlPoint.FullSize.Height));
@@ -427,6 +454,31 @@ namespace CurveEditor.Controls
             {
                 var pos = new Point(ControlPoint.HalfSize + 3, ControlPoint.HalfSize + 3);
                 MaxValueFont.Render(dc, $"{_Owner.MaxValue}", pos);
+            }
+        }
+
+        void UpdateScanningValue(MouseEventArgs e)
+        {
+            var controls = Children.OfType<ControlPoint>().ToArray();
+            if (controls.Length > 0)
+            {
+                var p0 = controls.First();
+                var p1 = controls.Last();
+
+                _ScanningPoint = e.GetPosition(this);
+                _ScanningPoint.X = MathUtility.Clamp(_ScanningPoint.X, p0.PositionX, p1.PositionX);
+
+                _ScanningTime = (float)((_ScanningPoint.X - ControlPoint.HalfSize) / (ControlAreaEndX - ControlAreaStartX));
+
+                switch (_Owner.Type)
+                {
+                    case CurveType.Linear:
+                        _ScanningValue = GetScanningLinearValue(_ScanningTime);
+                        break;
+                    case CurveType.CatmullRom:
+                        _ScanningValue = GetScanningCatmullRomValue(_ScanningTime);
+                        break;
+                }
             }
         }
 
@@ -450,6 +502,27 @@ namespace CurveEditor.Controls
 
             return (v1 - v0) * st + v0;
         }
+
+        float GetScanningCatmullRomValue(float t)
+        {
+            var controls = Children.OfType<ControlPoint>().ToArray();
+            var p0 = controls.Reverse().FirstOrDefault(arg => arg.Value.NormalizedTime <= t);
+            var p1 = controls.FirstOrDefault(arg => arg.Value.NormalizedTime > t);
+
+            var t0 = p0.Value.NormalizedTime;
+            var t1 = p1 != null ? p1.Value.NormalizedTime : p0.Value.NormalizedTime;
+            var dt = t1 - t0;
+            if (dt == 0)
+            {
+                return p0.Value.Value;
+            }
+            var seg_t = (t - t0) / dt;
+
+            var values = controls.Select(arg => arg.Value.Value).ToArray();
+            var value = CatmullRomSpline.ComputeSingle(controls.IndexOf(p0), seg_t, values);
+
+            return value;
+        }
     }
 
     public class CurveEditor : Selector
@@ -460,7 +533,7 @@ namespace CurveEditor.Controls
             set => SetValue(CurveTypeProperty, value);
         }
         public static readonly DependencyProperty CurveTypeProperty =
-            DependencyProperty.Register(nameof(Type), typeof(CurveType), typeof(CurveEditor), new PropertyMetadata(CurveType.Line));
+            DependencyProperty.Register(nameof(Type), typeof(CurveType), typeof(CurveEditor), new PropertyMetadata(CurveType.Linear));
 
         public float MaxValue
         {
@@ -655,7 +728,7 @@ namespace CurveEditor.Controls
             int index = controls.IndexOf(_DraggingControlPoint);
             var min_x = index > 0 ? controls[index - 1].PositionX : _CurveEditorCanvas.ControlAreaStartX;
             var max_x = index < controls.Length - 1 ? controls[index + 1].PositionX : _CurveEditorCanvas.ControlAreaEndX;
-            
+
             var pos = e.GetPosition(_CurveEditorCanvas);
             _DraggingControlPoint?.UpdatePosition(pos, min_x, max_x);
         }

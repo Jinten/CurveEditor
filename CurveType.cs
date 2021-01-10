@@ -8,8 +8,8 @@ namespace CurveEditor
 {
     public enum CurveType
     {
-        Line,
-        Catmull,
+        Linear,
+        CatmullRom,
         B_Spline,
     }
 }
