@@ -16,6 +16,13 @@ namespace CurveEditor
         }
         float _Value;
 
+        public float RangeValue
+        {
+            get => _RangedValue;
+            set => RaisePropertyChangedIfSet(ref _RangedValue, value);
+        }
+        float _RangedValue;
+
         public float NormalizedTime
         {
             get => _NormalizedTime;
@@ -26,13 +33,8 @@ namespace CurveEditor
         public ControlValue(float value, float nTime)
         {
             Value = value;
+            RangeValue = value;
             NormalizedTime = nTime;
-        }
-
-        public ControlValue(ControlValue src)
-        {
-            Value = src.Value;
-            NormalizedTime = src.NormalizedTime;
         }
     }
 }

@@ -98,7 +98,7 @@ namespace CurveEditor.Controls
             };
         }
 
-        internal void UpdateBrush()
+        void UpdateBrush()
         {
             if (_UnitPen == null)
             {

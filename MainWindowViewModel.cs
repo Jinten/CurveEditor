@@ -11,6 +11,7 @@ namespace CurveEditor
     public class ControlValueViewModel : Livet.ViewModel
     {
         public float Value => Model.Value;
+        public float RangeValue => Model.RangeValue;
         public float NormalizedTime => Model.NormalizedTime;
 
         ControlValue Model { get; }
@@ -33,10 +34,12 @@ namespace CurveEditor
                 case nameof(ControlValue.Value):
                     RaisePropertyChanged(nameof(Value));
                     break;
+                case nameof(ControlValue.RangeValue):
+                    RaisePropertyChanged(nameof(RangeValue));
+                    break;
                 case nameof(ControlValue.NormalizedTime):
                     RaisePropertyChanged(nameof(NormalizedTime));
                     break;
-
             }
         }
     }
@@ -56,7 +59,7 @@ namespace CurveEditor
             _ControlPoints.Add(new ControlValue(50.0f, 0.8f));
             _ControlPoints.Add(new ControlValue(60.0f, 1.0f));
 
-            foreach(var m in _ControlPoints)
+            foreach (var m in _ControlPoints)
             {
                 _ControlPointVMs.Add(new ControlValueViewModel(m));
             }

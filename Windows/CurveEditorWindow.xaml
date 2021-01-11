@@ -14,6 +14,7 @@
                     <ComboBoxItem Content="CatmullRom"/>
                 </ComboBox>
                 <CheckBox x:Name="ClampCheckBox" Content="Clamp"/>
+                <CheckBox x:Name="RangeCheckBox" Content="Range"/>
             </StackPanel>
             <StackPanel VerticalAlignment="Center" HorizontalAlignment="Left">
                 <local:CurveEditorCanvas x:Name="EditorCanvas" Width="200" Height="200"/>
