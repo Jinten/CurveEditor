@@ -40,6 +40,22 @@ namespace CurveEditor.Controls
         public static readonly DependencyProperty IsReadOnlyTypeProperty =
             DependencyProperty.Register(nameof(IsReadOnlyType), typeof(bool), typeof(CurveEditor), new FrameworkPropertyMetadata(false));
 
+        public bool IsClampEnabled
+        {
+            get => (bool)GetValue(IsClampEnabledProperty);
+            set => SetValue(IsClampEnabledProperty, value);
+        }
+        public static readonly DependencyProperty IsClampEnabledProperty =
+            DependencyProperty.Register(nameof(IsClampEnabled), typeof(bool), typeof(CurveEditor), new FrameworkPropertyMetadata(false));
+
+        public bool IsRangeEnabled
+        {
+            get => (bool)GetValue(IsRangeEnabledProperty);
+            set => SetValue(IsRangeEnabledProperty, value);
+        }
+        public static readonly DependencyProperty IsRangeEnabledProperty =
+            DependencyProperty.Register(nameof(IsRangeEnabled), typeof(bool), typeof(CurveEditor), new FrameworkPropertyMetadata(false));
+
         public float MaxValue
         {
             get => (float)GetValue(MaxValueProperty);

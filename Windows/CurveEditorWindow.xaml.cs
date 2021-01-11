@@ -1022,21 +1022,25 @@ namespace CurveEditor.Windows
         void ClampCheckBox_Checked(object sender, RoutedEventArgs e)
         {
             EditorCanvas.IsClamped = true;
+            Editor.IsClampEnabled = true;
         }
 
         void ClampCheckBox_Unchecked(object sender, RoutedEventArgs e)
         {
             EditorCanvas.IsClamped = false;
+            Editor.IsClampEnabled = false;
         }
 
         void RangeCheckBox_Checked(object sender, RoutedEventArgs e)
         {
             EditorCanvas.IsRanged = true;
+            Editor.IsRangeEnabled = true;
         }
 
         void RangeCheckBox_Unchecked(object sender, RoutedEventArgs e)
         {
             EditorCanvas.IsRanged = false;
+            Editor.IsRangeEnabled = false;
         }
 
         void CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
