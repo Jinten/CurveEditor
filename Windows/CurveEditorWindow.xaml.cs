@@ -927,13 +927,12 @@ namespace CurveEditor.Windows
                     break;
             }
 
+            ClampCheckBox.IsChecked = Editor.IsClampEnabled;
+            RangeCheckBox.IsChecked = Editor.IsRangeEnabled;
 
             ClampCheckBox.IsEnabled = Editor.IsReadOnlyClampFlag == false;
-            ClampCheckBox.Foreground = ClampCheckBox.IsEnabled ? Brushes.Black : Brushes.Gray;
             RangeCheckBox.IsEnabled = Editor.IsReadOnlyRangeFlag == false;
-            RangeCheckBox.Foreground = RangeCheckBox.IsEnabled ? Brushes.Black : Brushes.Gray;
             CurveTypeComboBox.IsEnabled = Editor.IsReadOnlyType == false;
-            CurveTypeComboBox.Foreground = CurveTypeComboBox.IsEnabled ? Brushes.Black : Brushes.Gray;
 
             CurveTypeComboBox.SelectionChanged += CurveTypeComboBox_SelectionChanged;
 

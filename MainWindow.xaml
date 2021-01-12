@@ -23,10 +23,10 @@
                                   MaxValue="{Binding MaxValue}"
                                   IsClampEnabled="{Binding IsClampEnabled}"
                                   IsRangeEnabled="{Binding IsRangeEnabled}"
-                                  IsReadOnlyClampFlag="{Binding IsReadOnlyClampFlag}"
-                                  IsReadOnlyRangeFlag="{Binding IsReadOnlyRangeFlag}"
+                                  IsReadOnlyClampFlag="{Binding IsReadOnlyClampFlag, Mode=OneWay}"
+                                  IsReadOnlyRangeFlag="{Binding IsReadOnlyRangeFlag, Mode=OneWay}"
                                   Type="{Binding CurveType}"
-                                  IsReadOnlyType="{Binding IsReadOnlyCurveType}"/>
+                                  IsReadOnlyType="{Binding IsReadOnlyCurveType, Mode=OneWay}"/>
             <StackPanel Margin="16,0,0,0">
                 <TextBlock Text="ViewModel binding properties." Foreground="WhiteSmoke"/>
                 <ListBox ItemsSource="{Binding ControlPointVMs}" Margin="0,16,0,0" Background="Black">
