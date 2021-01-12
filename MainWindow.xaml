@@ -18,7 +18,15 @@
 
     <Grid>
         <DockPanel VerticalAlignment="Center" HorizontalAlignment="Center">
-            <controls:CurveEditor ItemsSource="{Binding ControlPoints}" MinValue="0" MaxValue="100" Type="CatmullRom"/>
+            <controls:CurveEditor ItemsSource="{Binding ControlPoints}"
+                                  MinValue="{Binding MinValue}"
+                                  MaxValue="{Binding MaxValue}"
+                                  IsClampEnabled="{Binding IsClampEnabled}"
+                                  IsRangeEnabled="{Binding IsRangeEnabled}"
+                                  IsReadOnlyClampFlag="{Binding IsReadOnlyClampFlag}"
+                                  IsReadOnlyRangeFlag="{Binding IsReadOnlyRangeFlag}"
+                                  Type="{Binding CurveType}"
+                                  IsReadOnlyType="{Binding IsReadOnlyCurveType}"/>
             <StackPanel Margin="16,0,0,0">
                 <TextBlock Text="ViewModel binding properties." Foreground="WhiteSmoke"/>
                 <ListBox ItemsSource="{Binding ControlPointVMs}" Margin="0,16,0,0" Background="Black">

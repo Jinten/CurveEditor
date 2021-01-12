@@ -46,6 +46,62 @@ namespace CurveEditor
 
     class MainWindowViewModel : Livet.ViewModel
     {
+        public bool IsClampEnabled
+        {
+            get => _IsClampEnabled;
+            set => RaisePropertyChangedIfSet(ref _IsClampEnabled, value);
+        }
+        bool _IsClampEnabled = false;
+
+        public bool IsRangeEnabled
+        {
+            get => _IsRangeEnabled;
+            set => RaisePropertyChangedIfSet(ref _IsRangeEnabled, value);
+        }
+        bool _IsRangeEnabled = false;
+
+        public bool IsReadOnlyCurveType
+        {
+            get => _IsReadOnlyCurveType;
+            set => RaisePropertyChangedIfSet(ref _IsReadOnlyCurveType, value);
+        }
+        bool _IsReadOnlyCurveType = true;
+
+        public bool IsReadOnlyClampFlag
+        {
+            get => _IsReadOnlyClampFlag;
+            set => RaisePropertyChangedIfSet(ref _IsReadOnlyClampFlag, value);
+        }
+        bool _IsReadOnlyClampFlag = false;
+
+        public bool IsReadOnlyRangeFlag
+        {
+            get => _IsReadOnlyRangeFlag;
+            set => RaisePropertyChangedIfSet(ref _IsReadOnlyRangeFlag, value);
+        }
+        bool _IsReadOnlyRangeFlag = false;
+
+        public CurveType CurveType
+        {
+            get => _CurveType;
+            set => RaisePropertyChangedIfSet(ref _CurveType, value);
+        }
+        CurveType _CurveType = CurveType.CatmullRom;
+
+        public float MinValue
+        {
+            get => _MinValue;
+            set => RaisePropertyChangedIfSet(ref _MinValue, value);
+        }
+        float _MinValue = 0;
+
+        public float MaxValue
+        {
+            get => _MaxValue;
+            set => RaisePropertyChangedIfSet(ref _MaxValue, value);
+        }
+        float _MaxValue = 100;
+
         public IEnumerable<ControlValue> ControlPoints => _ControlPoints;
         ObservableCollection<ControlValue> _ControlPoints = new ObservableCollection<ControlValue>();
 

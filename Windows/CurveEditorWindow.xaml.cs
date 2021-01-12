@@ -634,7 +634,7 @@ namespace CurveEditor.Windows
                 dc.DrawLine(new Pen(Brushes.Red, 1), new Point(line_x, 0), new Point(line_x, ActualHeight));
 
                 // Subtract ControlPoint.HalfSize is for adjusting to render layout.
-                // _ScanningValue / _Owner.MaxValue is normalize vertical value line.
+                // _ScanningValue / _Owner.MaxValue is for normalizing vertical value line.
                 // Multiply sz.Height for stretching control area vertical and subtract from sz.Height for inverting Y axis.
 
                 // Value
@@ -914,8 +914,8 @@ namespace CurveEditor.Windows
             InitializeComponent();
 
             EditorCanvas.SetEditor(Editor);
-
-            CurveTypeComboBox.IsEnabled = Editor.IsReadOnlyType == false;
+            EditorCanvas.IsClamped = Editor.IsClampEnabled;
+            EditorCanvas.IsRanged = Editor.IsRangeEnabled;
 
             switch (Editor.Type)
             {
@@ -926,6 +926,14 @@ namespace CurveEditor.Windows
                     CurveTypeComboBox.SelectedIndex = 1;
                     break;
             }
+
+
+            ClampCheckBox.IsEnabled = Editor.IsReadOnlyClampFlag == false;
+            ClampCheckBox.Foreground = ClampCheckBox.IsEnabled ? Brushes.Black : Brushes.Gray;
+            RangeCheckBox.IsEnabled = Editor.IsReadOnlyRangeFlag == false;
+            RangeCheckBox.Foreground = RangeCheckBox.IsEnabled ? Brushes.Black : Brushes.Gray;
+            CurveTypeComboBox.IsEnabled = Editor.IsReadOnlyType == false;
+            CurveTypeComboBox.Foreground = CurveTypeComboBox.IsEnabled ? Brushes.Black : Brushes.Gray;
 
             CurveTypeComboBox.SelectionChanged += CurveTypeComboBox_SelectionChanged;
 

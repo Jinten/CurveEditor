@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:CurveEditor.Windows"
         mc:Ignorable="d"
-        Title="CurveEditor" Height="400" Width="430">
+        Title="CurveEditor" Height="320" Width="430">
     <Grid>
         <DockPanel>
             <StackPanel VerticalAlignment="Center" Width="100" Height="200" Margin="16,0,16,0">
@@ -13,8 +13,10 @@
                     <ComboBoxItem Content="Linear"/>
                     <ComboBoxItem Content="CatmullRom"/>
                 </ComboBox>
-                <CheckBox x:Name="ClampCheckBox" Content="Clamp"/>
-                <CheckBox x:Name="RangeCheckBox" Content="Range"/>
+                <StackPanel Margin="0,4,0,0">
+                    <CheckBox x:Name="ClampCheckBox" Content="Clamp"/>
+                    <CheckBox x:Name="RangeCheckBox" Content="Range"/>
+                </StackPanel>
             </StackPanel>
             <StackPanel VerticalAlignment="Center" HorizontalAlignment="Left">
                 <local:CurveEditorCanvas x:Name="EditorCanvas" Width="200" Height="200"/>

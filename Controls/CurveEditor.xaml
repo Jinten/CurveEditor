@@ -4,7 +4,7 @@
     xmlns:local="clr-namespace:CurveEditor.Controls">
 
     <Style TargetType="{x:Type local:CurveEditor}">
-        <Setter Property="Background" Value="#606060"/>
+        <Setter Property="Background" Value="#505050"/>
         <Setter Property="BorderBrush" Value="Black"/>
         <Setter Property="Template">
             <Setter.Value>

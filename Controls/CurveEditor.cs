@@ -46,7 +46,15 @@ namespace CurveEditor.Controls
             set => SetValue(IsClampEnabledProperty, value);
         }
         public static readonly DependencyProperty IsClampEnabledProperty =
-            DependencyProperty.Register(nameof(IsClampEnabled), typeof(bool), typeof(CurveEditor), new FrameworkPropertyMetadata(false));
+            DependencyProperty.Register(nameof(IsClampEnabled), typeof(bool), typeof(CurveEditor), new FrameworkPropertyMetadata(false, FrameworkPropertyMetadataOptions.BindsTwoWayByDefault));
+
+        public bool IsReadOnlyClampFlag
+        {
+            get => (bool)GetValue(IsReadOnlyClampFlagProperty);
+            set => SetValue(IsReadOnlyClampFlagProperty, value);
+        }
+        public static readonly DependencyProperty IsReadOnlyClampFlagProperty =
+            DependencyProperty.Register(nameof(IsReadOnlyClampFlag), typeof(bool), typeof(CurveEditor), new FrameworkPropertyMetadata(false));
 
         public bool IsRangeEnabled
         {
@@ -54,7 +62,15 @@ namespace CurveEditor.Controls
             set => SetValue(IsRangeEnabledProperty, value);
         }
         public static readonly DependencyProperty IsRangeEnabledProperty =
-            DependencyProperty.Register(nameof(IsRangeEnabled), typeof(bool), typeof(CurveEditor), new FrameworkPropertyMetadata(false));
+            DependencyProperty.Register(nameof(IsRangeEnabled), typeof(bool), typeof(CurveEditor), new FrameworkPropertyMetadata(false, FrameworkPropertyMetadataOptions.BindsTwoWayByDefault));
+
+        public bool IsReadOnlyRangeFlag
+        {
+            get => (bool)GetValue(IsReadOnlyRangeFlagProperty);
+            set => SetValue(IsReadOnlyRangeFlagProperty, value);
+        }
+        public static readonly DependencyProperty IsReadOnlyRangeFlagProperty =
+            DependencyProperty.Register(nameof(IsReadOnlyRangeFlag), typeof(bool), typeof(CurveEditor), new FrameworkPropertyMetadata(false));
 
         public float MaxValue
         {
